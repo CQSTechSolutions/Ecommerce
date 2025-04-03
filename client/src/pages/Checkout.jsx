@@ -361,7 +361,7 @@ const Checkout = () => {
                             required
                           />
                         </div>
-                        <div>
+                        <div className="hidden">
                           <label htmlFor="country" className="block text-gray-700 mb-2">Country*</label>
                           <input
                             type="text"
@@ -539,7 +539,7 @@ const Checkout = () => {
                             required
                           />
                         </div>
-                        <div>
+                        <div className="hidden">
                           <label htmlFor="billingCountry" className="block text-gray-700 mb-2">Country*</label>
                           <input
                             type="text"
