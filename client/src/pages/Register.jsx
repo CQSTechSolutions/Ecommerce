@@ -44,7 +44,7 @@ const Register = () => {
     }
     
     try {
-      const response = await axios.post("http://localhost:5000/api/user/register", {
+      const response = await axios.post("https://bagstopiaserver.vercel.app/api/user/register", {
         firstname: formData.firstName,
         lastname: formData.lastName,
         email: formData.email,
