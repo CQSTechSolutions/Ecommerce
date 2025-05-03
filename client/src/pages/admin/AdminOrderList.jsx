@@ -1,39 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router';
-import { FaEye, FaCheck, FaTimes } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { FaEye } from 'react-icons/fa';
 import AdminLayout from '../../components/admin/AdminLayout';
-
-const OrderStatusBadge = ({ status }) => {
-  let bgColor, textColor;
-  
-  switch (status) {
-    case 'Processing':
-      bgColor = 'bg-yellow-100';
-      textColor = 'text-yellow-800';
-      break;
-    case 'Shipped':
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-800';
-      break;
-    case 'Delivered':
-      bgColor = 'bg-green-100';
-      textColor = 'text-green-800';
-      break;
-    case 'Cancelled':
-      bgColor = 'bg-red-100';
-      textColor = 'text-red-800';
-      break;
-    default:
-      bgColor = 'bg-gray-100';
-      textColor = 'text-gray-800';
-  }
-  
-  return (
-    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${bgColor} ${textColor}`}>
-      {status}
-    </span>
-  );
-};
 
 const AdminOrderList = () => {
   const [orders, setOrders] = useState([]);
@@ -41,56 +9,32 @@ const AdminOrderList = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // In a real application, fetch from your API
-        // const response = await fetch(`/api/orders?pageNumber=${currentPage}`);
-        // const data = await response.json();
-        
-        // For demo purposes, using sample data
-        setTimeout(() => {
-          const sampleOrders = [
-            {
-              _id: '1',
-              user: { name: 'John Doe' },
-              totalPrice: 129.99,
-              isPaid: true,
-              paidAt: '2023-05-15T10:00:00Z',
-              isDelivered: true,
-              deliveredAt: '2023-05-18T14:30:00Z',
-              status: 'Delivered',
-              createdAt: '2023-05-14T08:15:00Z',
-            },
-            {
-              _id: '2',
-              user: { name: 'Jane Smith' },
-              totalPrice: 89.99,
-              isPaid: true,
-              paidAt: '2023-05-16T11:20:00Z',
-              isDelivered: false,
-              deliveredAt: null,
-              status: 'Shipped',
-              createdAt: '2023-05-16T09:45:00Z',
-            },
-            {
-              _id: '3',
-              user: { name: 'Robert Brown' },
-              totalPrice: 159.99,
-              isPaid: false,
-              paidAt: null,
-              isDelivered: false,
-              deliveredAt: null,
-              status: 'Processing',
-              createdAt: '2023-05-17T12:30:00Z',
-            },
-          ];
+        const url = statusFilter === 'all' 
+          ? `/api/order?page=${currentPage}` 
+          : `/api/order?page=${currentPage}&status=${statusFilter}`;
           
-          setOrders(sampleOrders);
-          setTotalPages(3); // Mock pagination
-          setLoading(false);
-        }, 1000);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setOrders(data);
+        
+        // If the API returns pagination info
+        const totalCount = response.headers.get('X-Total-Count');
+        const pageSize = 10; // Adjust based on your API's pagination size
+        if (totalCount) {
+          setTotalPages(Math.ceil(parseInt(totalCount) / pageSize));
+        }
+        
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again.');
@@ -99,21 +43,59 @@ const AdminOrderList = () => {
     };
 
     fetchOrders();
-  }, [currentPage]);
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Not available';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  }, [currentPage, statusFilter]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1); // Reset to first page on filter change
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'Processing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Shipped':
+        return 'bg-blue-100 text-blue-800';
+      case 'Delivered':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <AdminLayout>
-      <h2 className="text-2xl font-semibold mb-6">Orders</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-semibold">Orders</h2>
+        <div>
+          <label htmlFor="statusFilter" className="mr-2 text-sm font-medium text-gray-700">
+            Filter by Status:
+          </label>
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={handleStatusChange}
+            className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="all">All Orders</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
 
       {loading ? (
         <div className="text-center py-4">Loading orders...</div>
@@ -127,10 +109,10 @@ const AdminOrderList = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
+                      Order ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
+                      Customer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
@@ -139,13 +121,10 @@ const AdminOrderList = () => {
                       Total
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Paid
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Delivered
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -156,39 +135,28 @@ const AdminOrderList = () => {
                   {orders.map((order) => (
                     <tr key={order._id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order._id}
+                        #{order._id.substring(0, 8)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.user.name}
+                        {order.user?.name || 'Guest'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(order.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${order.totalPrice.toFixed(2)}
+                        ₹{order.totalAmount.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.status)}`}>
+                          {order.status}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {order.isPaid ? (
-                          <div className="flex items-center">
-                            <FaCheck className="text-green-600 mr-1" />
-                            {formatDate(order.paidAt)}
-                          </div>
+                          <span className="text-green-600">Paid</span>
                         ) : (
-                          <FaTimes className="text-red-600" />
+                          <span className="text-red-600">Pending</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.isDelivered ? (
-                          <div className="flex items-center">
-                            <FaCheck className="text-green-600 mr-1" />
-                            {formatDate(order.deliveredAt)}
-                          </div>
-                        ) : (
-                          <FaTimes className="text-red-600" />
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <OrderStatusBadge status={order.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link

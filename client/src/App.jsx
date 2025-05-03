@@ -95,7 +95,7 @@ const App = () => {
       {/* Admin routes */}
       <Route path="/admin" element={
         <AdminRoute>
-          <AdminDashboard />
+            <AdminProductList />
         </AdminRoute>
       } />
       <Route path="/admin/products" element={

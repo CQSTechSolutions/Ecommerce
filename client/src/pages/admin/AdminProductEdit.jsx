@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import AdminLayout from '../../components/admin/AdminLayout';
 
@@ -11,12 +11,11 @@ const AdminProductEdit = () => {
   const [formData, setFormData] = useState({
     name: '',
     price: 0,
-    brand: '',
-    category: '',
-    countInStock: 0,
     description: '',
     image: '',
-    featured: false,
+    category: '',
+    inStock: true,
+    rating: 5
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,28 +25,15 @@ const AdminProductEdit = () => {
     if (!isNewProduct) {
       const fetchProduct = async () => {
         try {
-          // In a real application, fetch from your API
-          // const response = await fetch(`/api/products/${id}`);
-          // const data = await response.json();
+          const response = await fetch(`/api/products/${id}`);
           
-          // For demo purposes, using sample data
-          setTimeout(() => {
-            // Mock product data based on ID
-            const mockProduct = {
-              _id: id,
-              name: id === '1' ? 'Elegant Tote Bag' : id === '2' ? 'Leather Messenger Bag' : 'Canvas Backpack',
-              price: id === '1' ? 59.99 : id === '2' ? 89.99 : 49.99,
-              brand: id === '1' ? 'LuxuryBrand' : id === '2' ? 'LeatherCo' : 'OutdoorGear',
-              category: id === '1' ? 'Tote' : id === '2' ? 'Messenger' : 'Backpack',
-              countInStock: id === '1' ? 15 : id === '2' ? 8 : 22,
-              description: `This is a high-quality ${id === '1' ? 'tote' : id === '2' ? 'messenger' : 'backpack'} bag, perfect for daily use.`,
-              image: '/images/sample.jpg',
-              featured: id === '1',
-            };
-            
-            setFormData(mockProduct);
-            setLoading(false);
-          }, 1000);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setFormData(data);
+          setLoading(false);
         } catch (error) {
           console.error('Error fetching product:', error);
           setError('Failed to load product. Please try again.');
@@ -74,21 +60,22 @@ const AdminProductEdit = () => {
     setIsSubmitting(true);
     
     try {
-      // In a real application, you would use your API
-      // const method = isNewProduct ? 'POST' : 'PUT';
-      // const url = isNewProduct ? '/api/products' : `/api/products/${id}`;
-      // const response = await fetch(url, {
-      //   method,
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // const data = await response.json();
+      const method = isNewProduct ? 'POST' : 'PUT';
+      const url = isNewProduct ? '/api/products' : `/api/products/${id}`;
       
-      // Simulate API call
-      setTimeout(() => {
-        setIsSubmitting(false);
-        navigate('/admin/products');
-      }, 1000);
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      await response.json();
+      setIsSubmitting(false);
+      navigate('/admin/products');
     } catch (error) {
       console.error('Error saving product:', error);
       setError('Failed to save product. Please try again.');
@@ -135,7 +122,7 @@ const AdminProductEdit = () => {
 
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                  Price ($)
+                  Price (₹)
                 </label>
                 <input
                   type="number"
@@ -145,21 +132,6 @@ const AdminProductEdit = () => {
                   onChange={handleChange}
                   min="0"
                   step="0.01"
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
-                  Brand
-                </label>
-                <input
-                  type="text"
-                  id="brand"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
                   required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
@@ -178,32 +150,29 @@ const AdminProductEdit = () => {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Select Category</option>
-                  <option value="Tote">Tote</option>
-                  <option value="Messenger">Messenger</option>
-                  <option value="Backpack">Backpack</option>
-                  <option value="Clutch">Clutch</option>
-                  <option value="Crossbody">Crossbody</option>
+                  <option value="backpacks">Backpacks</option>
+                  <option value="handbags">Handbags</option>
+                  <option value="travel">Travel</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="countInStock" className="block text-sm font-medium text-gray-700">
-                  Count in Stock
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description
                 </label>
-                <input
-                  type="number"
-                  id="countInStock"
-                  name="countInStock"
-                  value={formData.countInStock}
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
                   onChange={handleChange}
-                  min="0"
+                  rows="3"
                   required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
+              
               <div>
                 <label htmlFor="image" className="block text-sm font-medium text-gray-700">
                   Image URL
@@ -218,59 +187,50 @@ const AdminProductEdit = () => {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
+              
+              <div>
+                <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
+                  Rating
+                </label>
+                <input
+                  type="number"
+                  id="rating"
+                  name="rating"
+                  value={formData.rating}
+                  onChange={handleChange}
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  id="featured"
-                  name="featured"
-                  checked={formData.featured}
+                  id="inStock"
+                  name="inStock"
+                  checked={formData.inStock}
                   onChange={handleChange}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="featured" className="ml-2 block text-sm font-medium text-gray-700">
-                  Featured Product
+                <label htmlFor="inStock" className="ml-2 block text-sm text-gray-700">
+                  In Stock
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="mt-6">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows="4"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            ></textarea>
-          </div>
-
-          <div className="flex justify-end mt-6">
-            <button
-              type="button"
-              onClick={() => navigate('/admin/products')}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md mr-2 hover:bg-gray-300"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
+          <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               disabled={isSubmitting}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              {isSubmitting ? (
-                'Saving...'
-              ) : (
-                <>
-                  <FaSave className="mr-1" /> {isNewProduct ? 'Create Product' : 'Update Product'}
-                </>
-              )}
+              <FaSave className="mr-2" /> {isSubmitting ? 'Saving...' : 'Save Product'}
             </button>
           </div>
         </form>

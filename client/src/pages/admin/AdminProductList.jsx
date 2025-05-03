@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import AdminLayout from '../../components/admin/AdminLayout';
 
@@ -13,43 +13,23 @@ const AdminProductList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // In a real application, use your API endpoint
-        // const response = await fetch(`/api/products?pageNumber=${currentPage}`);
-        // const data = await response.json();
+        const response = await fetch(`/api/products?page=${currentPage}`);
         
-        // For demo purposes, using sample data
-        setTimeout(() => {
-          const sampleProducts = [
-            {
-              _id: '1',
-              name: 'Elegant Tote Bag',
-              price: 59.99,
-              category: 'Tote',
-              brand: 'LuxuryBrand',
-              countInStock: 15,
-            },
-            {
-              _id: '2',
-              name: 'Leather Messenger Bag',
-              price: 89.99,
-              category: 'Messenger',
-              brand: 'LeatherCo',
-              countInStock: 8,
-            },
-            {
-              _id: '3',
-              name: 'Canvas Backpack',
-              price: 49.99,
-              category: 'Backpack',
-              brand: 'OutdoorGear',
-              countInStock: 22,
-            },
-          ];
-          
-          setProducts(sampleProducts);
-          setTotalPages(3); // Mock pagination
-          setLoading(false);
-        }, 1000);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setProducts(data);
+        
+        // If the API returns pagination info
+        const totalCount = response.headers.get('X-Total-Count');
+        const pageSize = 10; // Adjust based on your API's pagination size
+        if (totalCount) {
+          setTotalPages(Math.ceil(parseInt(totalCount) / pageSize));
+        }
+        
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching products:', error);
         setError('Failed to load products. Please try again.');
@@ -63,10 +43,15 @@ const AdminProductList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        // In a real application, use your API endpoint
-        // await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        const response = await fetch(`/api/products/${id}`, { 
+          method: 'DELETE' 
+        });
         
-        // For demo purposes, just remove from local state
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        // Remove from local state after successful delete
         setProducts(products.filter(product => product._id !== id));
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -103,9 +88,6 @@ const AdminProductList = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -115,10 +97,10 @@ const AdminProductList = () => {
                       Category
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Brand
+                      Rating
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
+                      Status
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -128,23 +110,22 @@ const AdminProductList = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {products.map((product) => (
                     <tr key={product._id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {product._id}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {product.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${product.price.toFixed(2)}
+                        Rs.{product.price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {product.category}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {product.brand}
+                        {product.rating}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {product.countInStock}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {product.inStock ? 'In Stock' : 'Out of Stock'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">

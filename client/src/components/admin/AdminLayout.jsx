@@ -21,15 +21,6 @@ const AdminLayout = ({ children }) => {
         </div>
         <nav className="mt-8">
           <Link
-            to="/admin"
-            className={`flex items-center py-3 px-6 ${
-              location.pathname === '/admin' ? 'bg-gray-700' : 'hover:bg-gray-700'
-            }`}
-          >
-            <FaTachometerAlt className="mr-3" />
-            <span>Dashboard</span>
-          </Link>
-          <Link
             to="/admin/products"
             className={`flex items-center py-3 px-6 ${
               location.pathname.includes('/admin/products') ? 'bg-gray-700' : 'hover:bg-gray-700'
@@ -37,24 +28,6 @@ const AdminLayout = ({ children }) => {
           >
             <FaBoxes className="mr-3" />
             <span>Products</span>
-          </Link>
-          <Link
-            to="/admin/orders"
-            className={`flex items-center py-3 px-6 ${
-              location.pathname.includes('/admin/orders') ? 'bg-gray-700' : 'hover:bg-gray-700'
-            }`}
-          >
-            <FaClipboardList className="mr-3" />
-            <span>Orders</span>
-          </Link>
-          <Link
-            to="/admin/users"
-            className={`flex items-center py-3 px-6 ${
-              location.pathname.includes('/admin/users') ? 'bg-gray-700' : 'hover:bg-gray-700'
-            }`}
-          >
-            <FaUsers className="mr-3" />
-            <span>Users</span>
           </Link>
         </nav>
         <div className="absolute bottom-0 w-64 border-t border-gray-700">

@@ -3,7 +3,16 @@ import Product from '../models/product.model.js';
 // Get all products
 export const getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find({});
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * pageSize;
+
+        const totalCount = await Product.countDocuments({});
+        const products = await Product.find({})
+            .skip(skip)
+            .limit(pageSize);
+
+        res.set('X-Total-Count', totalCount);
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -54,9 +63,8 @@ export const updateProduct = async (req, res) => {
 // Delete a product
 export const deleteProduct = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findByIdAndDelete(req.params.id);
         if (product) {
-            await product.remove();
             res.json({ message: 'Product removed' });
         } else {
             res.status(404).json({ message: 'Product not found' });
